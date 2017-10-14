@@ -6,7 +6,7 @@
 #include "tst.h"
 
 /** constants insert, delete, max word(s) & stack nodes */
-enum { INS, DEL, WRDMAX = 256, STKMAX = 512, LMAX = 1024 };
+enum { INS, DEL, WRDMAX = 256, STKMAX = 512, LMAX = 1024, CITYMAX=300000 };
 #define REF INS
 #define CPY DEL
 
@@ -38,6 +38,7 @@ int main(int argc, char **argv)
 {
     char word[WRDMAX] = "";
     char *sgl[LMAX] = {NULL};
+    char (*cities)[WRDMAX] = malloc(sizeof (*cities) * CITYMAX);
     tst_node *root = NULL, *res = NULL;
     int rtn = 0, idx = 0, sidx = 0;
     FILE *fp = fopen(IN_FILE, "r");
@@ -49,10 +50,10 @@ int main(int argc, char **argv)
     }
 
     t1 = tvgetf();
-    while ((rtn = fscanf(fp, "%s", word)) != EOF) {
-        char *p = word;
+    while ((rtn = fscanf(fp, "%s", cities[idx])) != EOF) {
+        char *p = cities[idx];
         /* FIXME: insert reference to each string */
-        if (!tst_ins_del(&root, &p, INS, CPY)) {
+        if (!tst_ins_del(&root, &p, INS, REF)) {
             fprintf(stderr, "error: memory exhausted, tst_insert.\n");
             fclose(fp);
             return 1;
@@ -79,15 +80,15 @@ int main(int argc, char **argv)
             char *p = NULL;
         case 'a':
             printf("enter word to add: ");
-            if (!fgets(word, sizeof word, stdin)) {
+            if (!fgets(cities[idx], sizeof cities[idx], stdin)) {
                 fprintf(stderr, "error: insufficient input.\n");
                 break;
             }
-            rmcrlf(word);
-            p = word;
+            rmcrlf(cities[idx]);
+            p = cities[idx];
             t1 = tvgetf();
             /* FIXME: insert reference to each string */
-            res = tst_ins_del(&root, &p, INS, CPY);
+            res = tst_ins_del(&root, &p, INS, REF);
             t2 = tvgetf();
             if (res) {
                 idx++;
@@ -139,7 +140,7 @@ int main(int argc, char **argv)
             printf("  deleting %s\n", word);
             t1 = tvgetf();
             /* FIXME: remove reference to each string */
-            res = tst_ins_del(&root, &p, DEL, CPY);
+            res = tst_ins_del(&root, &p, DEL, REF);
             t2 = tvgetf();
             if (res)
                 printf("  delete failed.\n");
@@ -149,7 +150,8 @@ int main(int argc, char **argv)
             }
             break;
         case 'q':
-            tst_free_all(root);
+            tst_free(root);
+            free(cities);
             return 0;
             break;
         default:
