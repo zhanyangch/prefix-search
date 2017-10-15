@@ -4,25 +4,12 @@
 #include <time.h>
 
 #include "tst.h"
+#include "bench.h"
 
 /** constants insert, delete, max word(s) & stack nodes */
 enum { INS, DEL, WRDMAX = 256, STKMAX = 512, LMAX = 1024 };
 #define REF INS
 #define CPY DEL
-
-/* timing helper function */
-static double tvgetf(void)
-{
-    struct timespec ts;
-    double sec;
-
-    clock_gettime(CLOCK_REALTIME, &ts);
-    sec = ts.tv_nsec;
-    sec /= 1e9;
-    sec += ts.tv_sec;
-
-    return sec;
-}
 
 /* simple trim '\n' from end of buffer filled by fgets */
 static void rmcrlf(char *s)
@@ -33,6 +20,8 @@ static void rmcrlf(char *s)
 }
 
 #define IN_FILE "cities.txt"
+#define TST_BENCH "tst-cpy-bench.txt"
+#define SEARCH_BENCH "search-cpy-bench.txt"
 
 int main(int argc, char **argv)
 {
@@ -62,6 +51,24 @@ int main(int argc, char **argv)
 
     fclose(fp);
     printf("ternary_tree, loaded %d words in %.6f sec\n", idx, t2 - t1);
+
+    if(argc == 2 && strcmp(argv[1], "--bench") == 0) {
+        fp = fopen (TST_BENCH,"a+");
+        if (!fp) {
+            fprintf(stderr, "error: file open failed '%s'.\n", TST_BENCH);
+            return 1;
+        }
+        fprintf(fp, "%.6f\n",t2 - t1);
+        fclose(fp);
+        fp = fopen (SEARCH_BENCH,"a+");
+        if (!fp) {
+            fprintf(stderr, "error: file open failed '%s'.\n", SEARCH_BENCH);
+            return 1;
+        }
+        fprintf(fp, "%.6f\n",bench(root, sgl, &sidx, LMAX));
+        fclose(fp);
+        return 0;
+    }
 
     for (;;) {
         printf(

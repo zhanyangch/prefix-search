@@ -24,12 +24,13 @@ $(GIT_HOOKS):
 	@echo
 
 OBJS_LIB = \
-    tst.o
+    tst.o \
+    bench.o
 
 OBJS := \
     $(OBJS_LIB) \
     test_cpy.o \
-    test_ref.o
+    test_ref.o \
 
 deps := $(OBJS:%.o=.%.o.d)
 
@@ -41,8 +42,22 @@ test_%: test_%.o $(OBJS_LIB)
 	$(VECHO) "  CC\t$@\n"
 	$(Q)$(CC) -o $@ $(CFLAGS) -c -MMD -MF .$@.d $<
 
+bench:
+	echo 3 | sudo tee /proc/sys/vm/drop_caches
+	perf stat --repeat 100 \
+                -e cache-misses,cache-references,instructions,cycles \
+                sudo chrt -f 99 taskset -c 0 ./test_cpy --bench
+	echo 3 | sudo tee /proc/sys/vm/drop_caches
+	perf stat --repeat 100 \
+                -e cache-misses,cache-references,instructions,cycles \
+                sudo chrt -f 99 taskset -c 0 ./test_ref --bench
+plot:
+	gnuplot scripts/build_time.gp
+	gnuplot scripts/search_time.gp
+
 clean:
 	$(RM) $(TESTS) $(OBJS)
 	$(RM) $(deps)
+	$(RM) *-bench.txt *.png	
 
 -include $(deps)
