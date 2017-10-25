@@ -39,7 +39,12 @@ int main(int argc, char **argv)
     }
 
     t1 = tvgetf();
-    while ((rtn = fscanf(fp, "%s", cities[idx])) != EOF) {
+    while ((rtn = fscanf(fp, "%[^,\n]", cities[idx])) != EOF) {
+        char tmp = fgetc(fp);
+        if (tmp == ',') {
+            tmp = fgetc(fp);
+            strcat(cities[idx], ",");
+        }
         char *p = cities[idx];
         /* FIXME: insert reference to each string */
         if (!tst_ins_del(&root, &p, INS, REF)) {
@@ -54,7 +59,7 @@ int main(int argc, char **argv)
     fclose(fp);
     printf("ternary_tree, loaded %d words in %.6f sec\n", idx, t2 - t1);
 
-    if(argc == 2 && strcmp(argv[1], "--bench") == 0) {
+    if (argc == 2 && strcmp(argv[1], "--bench") == 0) {
         fp = fopen (TST_BENCH,"a+");
         if (!fp) {
             fprintf(stderr, "error: file open failed '%s'.\n", TST_BENCH);

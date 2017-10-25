@@ -38,7 +38,12 @@ int main(int argc, char **argv)
     }
 
     t1 = tvgetf();
-    while ((rtn = fscanf(fp, "%s", word)) != EOF) {
+    while ((rtn = fscanf(fp, "%[^,\n]", word)) != EOF) {
+        char tmp = fgetc(fp);
+        if (tmp == ',') {
+            tmp = fgetc(fp);
+            strcat(word, ",");
+        }
         char *p = word;
         if (!tst_ins_del(&root, &p, INS, CPY)) {
             fprintf(stderr, "error: memory exhausted, tst_insert.\n");
@@ -52,7 +57,7 @@ int main(int argc, char **argv)
     fclose(fp);
     printf("ternary_tree, loaded %d words in %.6f sec\n", idx, t2 - t1);
 
-    if(argc == 2 && strcmp(argv[1], "--bench") == 0) {
+    if (argc==2 && strcmp(argv[1], "--bench") == 0) {
         fp = fopen (TST_BENCH,"a+");
         if (!fp) {
             fprintf(stderr, "error: file open failed '%s'.\n", TST_BENCH);
